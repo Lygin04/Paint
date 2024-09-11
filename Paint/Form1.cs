@@ -1,11 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace AffineTransformation
@@ -185,6 +179,11 @@ namespace AffineTransformation
             canvas.Paint += PictureBox1_Paint;
 
             _reset = _bob;
+
+            _bob = Multiplication(_bob, _reflect);
+            DrawFigure();
+
+            WorldToScreen(_bob);
         }
 
         private void PictureBox1_Paint(object sender, PaintEventArgs e)
@@ -195,6 +194,20 @@ namespace AffineTransformation
             DrawXAxis(new Point(-w, 0), new Point(w, 0), e.Graphics);
             DrawYAxis(new Point(0, h), new Point(0, -h), e.Graphics);
             e.Graphics.FillEllipse(Brushes.Red, -2, -2, 4, 4);
+        }
+
+        private void WorldToScreen(float[,] position)
+        {
+            float screenCenterX = (float)canvas.ClientSize.Width / 2;
+            float screenCenterY = (float)canvas.ClientSize.Height / 2;
+
+            float scale = 20f;
+
+            for (int i = 0; i < position.Length / 3; i++)
+            {
+                position[i, 0] = screenCenterX + position[i, 0] * scale;
+                position[i, 1] = screenCenterY + position[i, 1] * scale;
+            }
         }
 
         private void DrawXAxis(Point start, Point end, Graphics g)
@@ -237,7 +250,7 @@ namespace AffineTransformation
             g.TranslateTransform(w, h);
             for (int i = 0; i < figure.Length / 3; i++)
             {
-                if (i == figure.Length / 3 - 1)
+                if (i == figure.Length / 3)
                 {
                     g.DrawLine(pen, figure[i, 0] * 20, figure[i, 1] * 20,
                         figure[0, 0] * 20, figure[0, 1] * 20);
@@ -255,22 +268,22 @@ namespace AffineTransformation
         private void DrawFigure()
         {
             Graphics g = canvas.CreateGraphics();
-            Pen pen = new Pen(Color.Orange);
-            int w = canvas.ClientSize.Width / 2;
+            Pen pen = new Pen(Color.Blue);
+/*            int w = canvas.ClientSize.Width / 2;
             int h = canvas.ClientSize.Height / 2;
             g.TranslateTransform(w, h);
-            string logger = string.Empty;
+*/            string logger = string.Empty;
             for (int i = 0; i < _adjacent.Length / 2 - 1; i++)
             {
                 if (i == _adjacent.Length / 2 - 1)
                 {
-                    g.DrawLine(pen, _bob[_adjacent[i, 0] - 1, 0] * 20, _bob[_adjacent[i, 1] - 1, 1] * 20,
-                        _bob[0, _adjacent[i + 1, 0] - 1] * 20, _bob[0, _adjacent[i + 1, 1] - 1] * 20);
+                    g.DrawLine(pen, _bob[_adjacent[i, 0] - 1, 0], _bob[_adjacent[i, 1] - 1, 1],
+                        _bob[0, _adjacent[i + 1, 0] - 1], _bob[0, _adjacent[i + 1, 1] - 1]);
                 }
                 else
                 {
-                    g.DrawLine(pen, _bob[_adjacent[i, 0] - 1, 0] * 20, _bob[_adjacent[i, 0] - 1, 1] * 20,
-                        _bob[_adjacent[i, 1] - 1, 0] * 20, _bob[_adjacent[i, 1] - 1, 1] * 20);
+                    g.DrawLine(pen, _bob[_adjacent[i, 0] - 1, 0], _bob[_adjacent[i, 0] - 1, 1],
+                        _bob[_adjacent[i, 1] - 1, 0], _bob[_adjacent[i, 1] - 1, 1]);
 
                     logger += $"X: {_bob[_adjacent[i, 0] - 1, 0]}, Y:{_bob[_adjacent[i, 0] - 1, 1]}  -  " +
                               $"X:{_bob[_adjacent[i, 1] - 1, 0]}, Y:{_bob[_adjacent[i, 1] - 1, 1]}\n";
@@ -326,13 +339,6 @@ namespace AffineTransformation
         {
             Refresh();
             _bob = Multiplication(_bob, _scaleUp);
-            DrawFigure();
-        }
-
-        private void reflectionButton_Click(object sender, EventArgs e)
-        {
-            Refresh();
-            _bob = Multiplication(_bob, _reflect);
             DrawFigure();
         }
 
