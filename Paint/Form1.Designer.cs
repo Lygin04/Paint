@@ -1,5 +1,5 @@
 ﻿
-namespace AffineTransformation
+namespace Paint
 {
     partial class Form1
     {
