@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Paint
@@ -138,7 +134,7 @@ namespace Paint
         public void Move(float deltaX, float deltaY)
         {
             float[,] translateMatrix =
-{
+                {
                     { 1, 0, 0 },
                     { 0, 1, 0 },
                     { deltaX, deltaY, 1 }
