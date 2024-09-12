@@ -4,12 +4,12 @@ using System.Windows.Forms;
 
 namespace Paint
 {
-    internal class Figure2D
+    public class Figure2D
     {
-        private float[,] _figure;
-        private readonly int[,] _adjacent;
-        private readonly float[,] _reset;
-        private readonly PictureBox _canvas;
+        private float[,] _figure;               // Матрица фигуры.
+        private readonly int[,] _adjacent;      // Смежная матрица фигуры.
+        private readonly float[,] _reset;       // Исходная матрица фигуры.
+        private readonly PictureBox _canvas;    // Холст на котором всё рисуется.
 
         // Уменьшение
         private readonly float[,] _scaleDown =
@@ -45,6 +45,10 @@ namespace Paint
             _adjacent = adjacent;
         }
 
+        /// <summary>
+        /// Перевод из мировых в экранные координаты.
+        /// </summary>
+        /// <param name="position"></param>
         private void WorldToScreen(float[,] position)
         {
             float screenCenterX = (float)_canvas.ClientSize.Width / 2;
@@ -59,6 +63,9 @@ namespace Paint
             }
         }
 
+        /// <summary>
+        /// Отрисовка фигуры.
+        /// </summary>
         public void DrawFigure()
         {
             Graphics g = _canvas.CreateGraphics();
@@ -80,6 +87,12 @@ namespace Paint
             g.Dispose();
         }
 
+        /// <summary>
+        /// Умножение 2 матриц.
+        /// </summary>
+        /// <param name="a">1 матрица.</param>
+        /// <param name="b">2 матрица.</param>
+        /// <returns>Результат умножения.</returns>
         public float[,] Multiplication(float[,] a, float[,] b)
         {
             float[,] result = new float[a.GetLength(0), b.GetLength(1)];
@@ -96,24 +109,37 @@ namespace Paint
             return result;
         }
         
+        /// <summary>
+        /// Уменьшение размера фигуры.
+        /// </summary>
         public void ScaleDown()
         {
             _figure = Multiplication(_figure, _scaleDown);
             DrawFigure();
         }
 
+        /// <summary>
+        /// Увеличение размера фигуры.
+        /// </summary>
         public void ScaleUp()
         {
             _figure = Multiplication(_figure, _scaleUp);
             DrawFigure();
         }
 
+        /// <summary>
+        /// Сброс фигуры до начальных значений.
+        /// </summary>
         public void Clear()
         {
             _figure = _reset;
             DrawFigure();
         }
 
+        /// <summary>
+        /// Поворот фигуры.
+        /// </summary>
+        /// <param name="deltaX">Смещение по оси X. Для расчета угла смещения.</param>
         public void Rotate(float deltaX)
         {
             float _angle = deltaX * 0.05f;
@@ -131,6 +157,11 @@ namespace Paint
             _figure = Multiplication(_figure, rotate);
         }
 
+        /// <summary>
+        /// Перемещение фигуры.
+        /// </summary>
+        /// <param name="deltaX">Смещение фигуры по оси X.</param>
+        /// <param name="deltaY">Смещение фигуры по оси Y.</param>
         public void Move(float deltaX, float deltaY)
         {
             float[,] translateMatrix =
