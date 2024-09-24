@@ -6,10 +6,10 @@ namespace Paint
 {
     public class Figure2D
     {
-        private float[,] _figure;               // Матрица фигуры.
-        private readonly int[,] _adjacent;      // Смежная матрица фигуры.
-        private readonly float[,] _reset;       // Исходная матрица фигуры.
-        private readonly PictureBox _canvas;    // Холст на котором всё рисуется.
+        private float[,] _figure; // Матрица фигуры.
+        private readonly int[,] _adjacent; // Смежная матрица фигуры.
+        private readonly float[,] _reset; // Исходная матрица фигуры.
+        private readonly PictureBox _canvas; // Холст на котором всё рисуется.
 
         // Уменьшение
         private readonly float[,] _scaleDown =
@@ -40,7 +40,6 @@ namespace Paint
             _canvas = canvas;
             _figure = figure;
             _figure = Multiplication(_figure, _reflect);
-            WorldToScreen(_figure);
             _reset = figure;
             _adjacent = adjacent;
         }
@@ -49,18 +48,21 @@ namespace Paint
         /// Перевод из мировых в экранные координаты.
         /// </summary>
         /// <param name="position"></param>
-        private void WorldToScreen(float[,] position)
+        private float[,] WorldToScreen(float[,] position)
         {
-            float screenCenterX = (float)_canvas.ClientSize.Width / 2;
-            float screenCenterY = (float)_canvas.ClientSize.Height / 2;
+            var temp = Utils.Copy(position);
+            var screenCenterX = (float)_canvas.ClientSize.Width / 2;
+            var screenCenterY = (float)_canvas.ClientSize.Height / 2;
 
-            float scale = 20f;
+            var scale = 20f;
 
-            for (int i = 0; i < position.Length / 3; i++)
+            for (var i = 0; i < position.Length / 3; i++)
             {
-                position[i, 0] = screenCenterX + position[i, 0] * scale;
-                position[i, 1] = screenCenterY + position[i, 1] * scale;
+                temp[i, 0] = screenCenterX + temp[i, 0] * scale;
+                temp[i, 1] = screenCenterY + temp[i, 1] * scale;
             }
+
+            return temp;
         }
 
         /// <summary>
@@ -68,19 +70,20 @@ namespace Paint
         /// </summary>
         public void DrawFigure()
         {
-            Graphics g = _canvas.CreateGraphics();
-            Pen pen = new Pen(Color.Blue);
-            for (int i = 0; i < _adjacent.Length / 2 - 1; i++)
+            var temp = WorldToScreen(_figure);
+            var g = _canvas.CreateGraphics();
+            var pen = new Pen(Color.Black);
+            for (var i = 0; i < _adjacent.Length / 2 - 1; i++)
             {
                 if (i == _adjacent.Length / 2 - 1)
                 {
-                    g.DrawLine(pen, _figure[_adjacent[i, 0] - 1, 0], _figure[_adjacent[i, 1] - 1, 1],
-                        _figure[0, _adjacent[i + 1, 0] - 1], _figure[0, _adjacent[i + 1, 1] - 1]);
+                    g.DrawLine(pen, temp[_adjacent[i, 0] - 1, 0], temp[_adjacent[i, 1] - 1, 1],
+                        temp[0, _adjacent[i + 1, 0] - 1], temp[0, _adjacent[i + 1, 1] - 1]);
                 }
                 else
                 {
-                    g.DrawLine(pen, _figure[_adjacent[i, 0] - 1, 0], _figure[_adjacent[i, 0] - 1, 1],
-                        _figure[_adjacent[i, 1] - 1, 0], _figure[_adjacent[i, 1] - 1, 1]);
+                    g.DrawLine(pen, temp[_adjacent[i, 0] - 1, 0], temp[_adjacent[i, 0] - 1, 1],
+                        temp[_adjacent[i, 1] - 1, 0], temp[_adjacent[i, 1] - 1, 1]);
                 }
             }
 
@@ -95,20 +98,21 @@ namespace Paint
         /// <returns>Результат умножения.</returns>
         public float[,] Multiplication(float[,] a, float[,] b)
         {
-            float[,] result = new float[a.GetLength(0), b.GetLength(1)];
-            for (int i = 0; i < a.GetLength(0); i++)
+            var result = new float[a.GetLength(0), b.GetLength(1)];
+            for (var i = 0; i < a.GetLength(0); i++)
             {
-                for (int j = 0; j < b.GetLength(1); j++)
+                for (var j = 0; j < b.GetLength(1); j++)
                 {
-                    for (int k = 0; k < b.GetLength(0); k++)
+                    for (var k = 0; k < b.GetLength(0); k++)
                     {
                         result[i, j] += a[i, k] * b[k, j];
                     }
                 }
             }
+
             return result;
         }
-        
+
         /// <summary>
         /// Уменьшение размера фигуры.
         /// </summary>
@@ -132,8 +136,10 @@ namespace Paint
         /// </summary>
         public void Clear()
         {
+            var temp = _figure;
             _figure = _reset;
             DrawFigure();
+            _figure = temp;
         }
 
         /// <summary>
@@ -142,17 +148,17 @@ namespace Paint
         /// <param name="deltaX">Смещение по оси X. Для расчета угла смещения.</param>
         public void Rotate(float deltaX)
         {
-            float _angle = deltaX * 0.05f;
+            var _angle = deltaX * 0.05f;
 
-            float cos = MathF.Cos(_angle);
-            float sin = MathF.Sin(_angle);
+            var cos = MathF.Cos(_angle);
+            var sin = MathF.Sin(_angle);
 
             float[,] rotate =
             {
-                    { cos, -sin, 0 },
-                    { sin, cos, 0 },
-                    { 0, 0, 1 }
-                };
+                { cos, -sin, 0 },
+                { sin, cos, 0 },
+                { 0, 0, 1 }
+            };
 
             _figure = Multiplication(_figure, rotate);
         }
@@ -165,11 +171,11 @@ namespace Paint
         public void Move(float deltaX, float deltaY)
         {
             float[,] translateMatrix =
-                {
-                    { 1, 0, 0 },
-                    { 0, 1, 0 },
-                    { deltaX, deltaY, 1 }
-                };
+            {
+                { 1, 0, 0 },
+                { 0, 1, 0 },
+                { deltaX, deltaY, 1 }
+            };
 
             _figure = Multiplication(_figure, translateMatrix);
         }
