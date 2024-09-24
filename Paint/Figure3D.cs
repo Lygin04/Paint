@@ -99,6 +99,11 @@ namespace Paint
                 }
             }
 
+            for (int i = 0; i < 5; i++)
+            {
+                g.DrawLine(pen, temp[i, 0], temp[i, 1], temp3D[i, 0], temp3D[i, 1]);
+            }
+
             g.Dispose();
         }
 
