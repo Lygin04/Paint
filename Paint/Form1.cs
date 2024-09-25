@@ -198,6 +198,7 @@ namespace Paint
             if (_isRotating)
             {
                 _figure2D.RotateY(deltaX);
+                _figure2D.RotateX(deltaY);
                 Refresh();
                 _figure2D.DrawFigure();
 
