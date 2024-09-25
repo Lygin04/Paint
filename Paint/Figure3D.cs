@@ -6,10 +6,10 @@ namespace Paint
 {
     public class Figure3D
     {
-        private float[,] _figure, _figure3D;               // Матрица фигуры.
-        private readonly int[,] _adjacent;      // Смежная матрица фигуры.
+        private float[,] _figure, _figure3D;              // Матрицы фигуры.
+        private readonly int[,] _adjacent;                // Смежная матрица фигуры.
         private readonly float[,] _reset, _reset3D;       // Исходная матрица фигуры.
-        private readonly PictureBox _canvas;    // Холст на котором всё рисуется.
+        private readonly PictureBox _canvas;              // Холст на котором всё рисуется.
 
         // Уменьшение
         private readonly float[,] _scaleDown =
@@ -46,6 +46,7 @@ namespace Paint
             _figure = Multiplication(_figure, _reflect);
             _figure3D = Multiplication(_figure3D, _reflect);
             _reset = figure;
+            _reset3D = figure3D;
             _adjacent = adjacent;
         }
 
@@ -154,13 +155,13 @@ namespace Paint
         /// </summary>
         public void Clear()
         {
-            var temp = _figure;
-            var temp3D = _figure3D;
-            _figure3D = _reset3D;
-            _figure = _reset;
-            DrawFigure();
+            var temp = _reset;
+            var temp3D = _reset3D;
             _figure = temp;
             _figure3D = temp3D;
+            _figure = Multiplication(_figure, _reflect);
+            _figure3D = Multiplication(_figure3D, _reflect);
+
         }
 
         /// <summary>
