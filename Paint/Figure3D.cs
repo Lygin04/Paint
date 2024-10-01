@@ -6,10 +6,19 @@ namespace Paint
 {
     public class Figure3D
     {
-        private float[,] _figure, _figure3D;              // Матрицы фигуры.
-        private readonly int[,] _adjacent;                // Смежная матрица фигуры.
-        private readonly float[,] _reset, _reset3D;       // Исходная матрица фигуры.
-        private readonly PictureBox _canvas;              // Холст на котором всё рисуется.
+        private float[,] _figure, _figure3D;
+        private readonly int[,] _adjacent;
+        private readonly float[,] _reset, _reset3D;
+        private readonly PictureBox _canvas;
+
+        // Матрица перспективного преобразования
+        private readonly float[,] _perspective =
+        {
+            { 1, 0, 0, 0 },
+            { 0, 1, 0, 0 },
+            { 0, 0, 1, -0.002f },  // Чем меньше коэффициент, тем сильнее эффект перспективы
+            { 0, 0, 0, 1 }
+        };
 
         // Уменьшение
         private readonly float[,] _scaleDown =
@@ -43,11 +52,33 @@ namespace Paint
             _canvas = canvas;
             _figure = figure;
             _figure3D = figure3D;
-            _figure = Multiplication(_figure, _reflect);
+/*            _figure = Multiplication(_figure, _reflect);
             _figure3D = Multiplication(_figure3D, _reflect);
-            _reset = figure;
+*/            _reset = figure;
             _reset3D = figure3D;
             _adjacent = adjacent;
+        }
+
+        /// <summary>
+        /// Применение перспективного преобразования
+        /// </summary>
+        /// <param name="position"></param>
+        /// <returns></returns>
+        private float[,] ApplyPerspective(float[,] position)
+        {
+            var temp = Utils.Copy(position);
+
+            for (var i = 0; i < position.Length / 4; i++)
+            {
+                float z = temp[i, 2];
+                float w = 1 + z * _perspective[2, 3];  // Это модифицированная координата W
+
+                temp[i, 0] /= w;
+                temp[i, 1] /= w;
+                temp[i, 2] /= w;
+            }
+
+            return temp;
         }
 
         /// <summary>
@@ -72,37 +103,75 @@ namespace Paint
         }
 
         /// <summary>
-        /// Отрисовка фигуры.
+        /// Вычисление нормали грани
+        /// </summary>
+        private float[] CalculateNormal(float[] v0, float[] v1, float[] v2)
+        {
+            float[] vector1 = { v1[0] - v0[0], v1[1] - v0[1], v1[2] - v0[2] };
+            float[] vector2 = { v2[0] - v0[0], v2[1] - v0[1], v2[2] - v0[2] };
+
+            // Векторное произведение двух векторов для получения нормали
+            return new float[]
+            {
+                vector1[1] * vector2[2] - vector1[2] * vector2[1],
+                vector1[2] * vector2[0] - vector1[0] * vector2[2],
+                vector1[0] * vector2[1] - vector1[1] * vector2[0]
+            };
+        }
+
+        /// <summary>
+        /// Нормализация вектора
+        /// </summary>
+        private float[] Normalize(float[] vector)
+        {
+            float length = (float)Math.Sqrt(vector[0] * vector[0] + vector[1] * vector[1] + vector[2] * vector[2]);
+            return new float[] { vector[0] / length, vector[1] / length, vector[2] / length };
+        }
+
+        /// <summary>
+        /// Проверка видимости грани
+        /// </summary>
+        private bool IsFaceVisible(float[] normal, float[] cameraPosition, float[] pointOnFace)
+        {
+            // Вектор от точки на грани до камеры
+            float[] viewVector = { cameraPosition[0] - pointOnFace[0], cameraPosition[1] - pointOnFace[1], cameraPosition[2] - pointOnFace[2] };
+
+            // Скалярное произведение нормали и вектора взгляда
+            float dotProduct = normal[0] * viewVector[0] + normal[1] * viewVector[1] + normal[2] * viewVector[2];
+
+            return dotProduct < 0; // Грань видима, если скалярное произведение отрицательное
+        }
+
+        /// <summary>
+        /// Отрисовка фигуры с удалением невидимых ребер
         /// </summary>
         public void DrawFigure()
         {
-            var temp = WorldToScreen(_figure);
-            var temp3D = WorldToScreen(_figure3D);
+            var screenPoints = WorldToScreen(_figure);
             var g = _canvas.CreateGraphics();
             var pen = new Pen(Color.Blue);
-            for (var i = 0; i < _adjacent.Length / 2 - 1; i++)
+
+            float[] cameraPosition = { 0, 1, 0 }; // Камера расположена по оси Z
+
+            for (var i = 0; i < _adjacent.GetLength(0); i++)
             {
-                if (i == _adjacent.Length / 2 - 1)
+                // Определяем вершины текущей грани
+                float[] v0 = { _figure[_adjacent[i, 0] - 1, 0], _figure[_adjacent[i, 0] - 1, 1], _figure[_adjacent[i, 0] - 1, 2] };
+                float[] v1 = { _figure[_adjacent[i, 1] - 1, 0], _figure[_adjacent[i, 1] - 1, 1], _figure[_adjacent[i, 1] - 1, 2] };
+                float[] v2 = { _figure[_adjacent[i, 1] - 1, 0], _figure[_adjacent[i, 1] - 1, 1], _figure[_adjacent[i, 1] - 1, 2] };
+
+                // Вычисляем нормаль
+                var normal = CalculateNormal(v0, v1, v2);
+                normal = Normalize(normal);
+
+                // Проверяем видимость грани
+                if (IsFaceVisible(normal, cameraPosition, v0))
                 {
-                    g.DrawLine(pen, temp[_adjacent[i, 0] - 1, 0], temp[_adjacent[i, 1] - 1, 1],
-                        temp[0, _adjacent[i + 1, 0] - 1], temp[0, _adjacent[i + 1, 1] - 1]);
-
-                    g.DrawLine(pen, temp3D[_adjacent[i, 0] - 1, 0], temp3D[_adjacent[i, 1] - 1, 1],
-                        temp3D[0, _adjacent[i + 1, 0] - 1], temp3D[0, _adjacent[i + 1, 1] - 1]);
+                    // Рисуем видимую грань
+                    g.DrawLine(pen,
+                        screenPoints[_adjacent[i, 0] - 1, 0], screenPoints[_adjacent[i, 0] - 1, 1],
+                        screenPoints[_adjacent[i, 1] - 1, 0], screenPoints[_adjacent[i, 1] - 1, 1]);
                 }
-                else
-                {
-                    g.DrawLine(pen, temp[_adjacent[i, 0] - 1, 0], temp[_adjacent[i, 0] - 1, 1],
-                        temp[_adjacent[i, 1] - 1, 0], temp[_adjacent[i, 1] - 1, 1]);
-
-                    g.DrawLine(pen, temp3D[_adjacent[i, 0] - 1, 0], temp3D[_adjacent[i, 0] - 1, 1],
-                        temp3D[_adjacent[i, 1] - 1, 0], temp3D[_adjacent[i, 1] - 1, 1]);
-                }
-            }
-
-            for (int i = 0; i < 5; i++)
-            {
-                g.DrawLine(pen, temp[i, 0], temp[i, 1], temp3D[i, 0], temp3D[i, 1]);
             }
 
             g.Dispose();

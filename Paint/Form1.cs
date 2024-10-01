@@ -10,7 +10,7 @@ namespace Paint
         private bool _isRotating;
         private Point _lastMousePos;
 
-        private Figure3D _figure2D;
+        private Projection _figure2D;
 
         private float[,] _bob = 
         {
@@ -62,10 +62,10 @@ namespace Paint
             {4, 1, 5, 1},
             {6, -2, 5, 1},
             {-6, -2, 5, 1 },
-            {2, 3, 5, 1 },
-            {2, 2, 5, 1 },
-            {1, 2, 5, 1 },
-            {1, 3, 5, 1},
+            {0, 0, 0, 1 },
+            {0, 0, 0, 1 },
+            {0, 0, 0, 1 },
+            {0, 0, 0, 1},
             {0, 0, 0, 1 },
             {0, 0, 0, 1 },
             {0, 0, 0, 1 },
@@ -108,7 +108,7 @@ namespace Paint
             InitializeComponent();
             canvas.Paint += PictureBox1_Paint;
 
-            _figure2D = new Figure3D(_bob, _bob3D, _adjacent, canvas);
+            _figure2D = new Projection(_bob, _bob3D, _adjacent, canvas);
         }
 
         private void PictureBox1_Paint(object sender, PaintEventArgs e)
