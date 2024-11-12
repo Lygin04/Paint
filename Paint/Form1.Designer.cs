@@ -110,6 +110,7 @@ namespace Paint
             Controls.Add(canvas);
             Name = "Form1";
             Text = "Губка Боб";
+            KeyDown += Form1_KeyDown;
             ((System.ComponentModel.ISupportInitialize)canvas).EndInit();
             ResumeLayout(false);
         }
